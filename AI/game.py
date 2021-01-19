@@ -1,6 +1,8 @@
 import pygame
+from PIL import Image
 import assistant as assistant
 import numpy as np
+import cv2
 import random
 WIDTH = 900
 HEIGHT = 900
@@ -82,50 +84,67 @@ class Food:
     def draw(self,win):
         self.board.draw_square(win,self.currentPos,self.color)
 class VanilaGame:
+    MOVE_PENALTY = 1
+    WALL_PENALTY = 300
+    COLLISION_PENALTY = 400
+    FOOD_REWARD = 25
     def __init__(self,WIDTH,HEIGHT,SEGMENT):
         self.board = Board(WIDTH,HEIGHT,SEGMENT)# creating the board
         self.snake = Snake(self.board,(220,220,220))# creating the snake
         self.food = Food(self.board)#create food
+        self.OBSERVATION_SPACE_VALUES = (self.board.rows,self.board.coloums,3)
+        self.ACTION_SPACE_SIZE  = 4
         self.win = pygame.display.set_mode((WIDTH,HEIGHT))#all you need to make a window in pygame
         self.clock = pygame.time.Clock()#creates clock for fps setting
         self.food.spawn(self.snake)#spawn FOOD
-        for i in range(20):
-            self.snake.add_length()
+        self.done = False
+        self.episode_step = 0
     def reset(self):
+        self.episode_step = 0
         self.snake = Snake(self.board,(220,220,220))# creating the snake
         self.food = Food(self.board)#create food
         self.food.spawn(self.snake)#spawn FOOD
-    def GameLoop(self):
-        while True:
-            self.clock.tick(15)#sets FPS
-            self.win.fill((0,0,0))#clears window
-            for event in pygame.event.get():#you haved to have this loop in every pygame game loop|
-                if event.type == pygame.QUIT:#this is vitial                                      | these make it so you can end window
-                    break#this is vitial                                                          | if you dont have these lines in your pygame loop your game will crash
-            keys = pygame.key.get_pressed() #Grab Pressed Keys
-            if(keys[pygame.K_LEFT]):#left arrow
-                self.snake.vel = [-1,0]
-            if(keys[pygame.K_UP]):#up arrow
-                self.snake.vel = [0,-1]
-            if(keys[pygame.K_RIGHT]):#right arrow
-                self.snake.vel = [1,0]
-            if(keys[pygame.K_DOWN]):#down arrow
-                self.snake.vel = [0,1]
-            self.snake.move()#move snake
-            #put Game logic her like collisions etc
-            if(self.snake.current_pos[0] == self.food.currentPos[0] and self.snake.current_pos[1] == self.food.currentPos[1]):#checks if the snake head is on top of the food aka eating it this should be a fucntion but who cares its like 2 lines
-                self.food.spawn(self.snake)
-                self.snake.add_length()
-            if (self.snake.CheckCollisionWithSelf()):
-                self.reset()
-            if (self.board.CheckInBounds(self.snake)):
-                self.reset()
-            #draw stuff here
-            self.board.draw(self.win)#        -|
-            self.snake.draw(self.win)#        -|
-            self.food.draw(self.win)#         -| all of this jus draws stuff to screen
-            pygame.display.update()#-|
+        self.done = False
+        return np.array(self.Get_State())
+    def render(self):
+        img = self.Get_State()
+        img = img.resize((300, 300))  # resizing so we can see our agent in all its glory.
+        cv2.imshow("image", np.array(img))  # show it!
+        cv2.waitKey(1)
+    def Get_State(self):
+        env = np.zeros((self.board.coloums, self.board.rows, 3), dtype=np.uint8)  # starts an rbg of our size
+        env[self.food.currentPos[0]][self.food.currentPos[1]] = (0, 255, 0)  # sets the food location tile to green color
+        for i in self.snake.body_pos:
+            env[i[0]][i[1]] = (255, 0, 0)
+        env[self.snake.current_pos[0]][self.snake.current_pos[1]] = (0, 0, 255)  # sets the player tile to blue
+        img = Image.fromarray(env, 'RGB')  # reading to rgb. Apparently. Even tho color definitions are bgr. ???
+        return img
+    def step(self,action):
+        if(action == 0):#left arrow
+            self.snake.vel = [-1,0]
+        if(action == 1):#up arrow
+            self.snake.vel = [0,-1]
+        if(action == 2):#right arrow
+            self.snake.vel = [1,0]
+        if(action == 3):#down arrow
+            self.snake.vel = [0,1]
+        self.snake.move()#move snake
+        #put Game logic her like collisions etc
+        reward = -self.MOVE_PENALTY
+        if(self.snake.current_pos[0] == self.food.currentPos[0] and self.snake.current_pos[1] == self.food.currentPos[1]):#checks if the snake head is on top of the food aka eating it this should be a fucntion but who cares its like 2 lines
+            self.food.spawn(self.snake)
+            reward = self.FOOD_REWARD
+            self.done = True
+            self.snake.add_length()
+        if (self.snake.CheckCollisionWithSelf()):
+            reward = -self.COLLISION_PENALTY
+            self.done = True
+        if (self.board.CheckInBounds(self.snake)):
+            reward = -self.WALL_PENALTY
+            self.done = True
+        if self.episode_step >= 25:
+            self.done = True
+        self.episode_step += 1
+        return np.array(self.Get_State()),reward ,self.done
 
 
-game = VanilaGame(WIDTH,HEIGHT,15)
-game.GameLoop()
