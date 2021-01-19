@@ -2,7 +2,7 @@ from PIL import Image
 import PIL
 import assistant as assistant
 import numpy as np
-import cv2
+#import cv2
 import random
 WIDTH = 900
 HEIGHT = 900
@@ -139,10 +139,11 @@ class VanilaGame:
         self.done = False
         return np.array(self.Get_Image())
     def render(self):
-        img = self.Get_Image()
-        img = img.resize((300, 300),PIL.Image.BOX)  # resizing so we can see our agent in all its glory.
-        cv2.imshow("image", np.array(img))  # show it!
-        cv2.waitKey(1)
+        pass
+        # img = self.Get_Image()
+        # img = img.resize((300, 300),PIL.Image.BOX)  # resizing so we can see our agent in all its glory.
+        # cv2.imshow("image", np.array(img))  # show it!
+        # cv2.waitKey(1)
     def Get_Image(self):
         env = np.zeros((self.board.coloums-2, self.board.rows-2, 3), dtype=np.uint8)  # starts an rbg of our size
         env[self.food.currentPos[0]-1][self.food.currentPos[1]-1] = (0, 255, 0)  # sets the food location tile to green color
