@@ -17,9 +17,9 @@ tf.executing_eagerly()
 DISCOUNT = 0.99
 REPLAY_MEMORY_SIZE = 50_000  # How many last steps to keep for model training
 MIN_REPLAY_MEMORY_SIZE = 10_000  # Minimum number of steps in a memory to start training
-MINIBATCH_SIZE = 64  # How many steps (samples) to use for training
-UPDATE_TARGET_EVERY = 10  # Terminal states (end of episodes)
-MODEL_NAME = 'BabyConnerPt2'
+MINIBATCH_SIZE = 32  # How many steps (samples) to use for training
+UPDATE_TARGET_EVERY = 50  # Terminal states (end of episodes)
+MODEL_NAME = 'BabyConnerPt2.0.1'
 MIN_REWARD = -200  # For model save
 MEMORY_FRACTION = 0.20
 
@@ -32,10 +32,10 @@ EPSILON_DECAY = 0.99975
 MIN_EPSILON = 0.001
 
 #  Stats settings
-AGGREGATE_STATS_EVERY = 50  # episodes
+AGGREGATE_STATS_EVERY = 10  # episodes
 SHOW_PREVIEW = True
 
-env = VanilaGame(300,300,15)
+env = VanilaGame(300,300,30)
 
 # For stats
 ep_rewards = [-200]
@@ -219,7 +219,8 @@ for episode in tqdm(range(1,EPISODES+1),ascii=True, unit="episode"):
         average_reward = sum(ep_rewards[-AGGREGATE_STATS_EVERY:])/len(ep_rewards[-AGGREGATE_STATS_EVERY:])
         min_reward = min(ep_rewards[-AGGREGATE_STATS_EVERY:])
         max_reward = max(ep_rewards[-AGGREGATE_STATS_EVERY:])
-        agent.tensorboard.update_stats(reward_avg=average_reward, reward_min=min_reward, reward_max=max_reward, epsilon=epsilon)
+        mem_size = len(agent.replay_memory)
+        agent.tensorboard.update_stats(reward_avg=average_reward, reward_min=min_reward, reward_max=max_reward, epsilon=epsilon,replay_mem_size= mem_size)
 
         # Save model, but only when min reward is greater or equal a set value
         if min_reward >= MIN_REWARD:

@@ -45,7 +45,9 @@ class Snake:
         self.body_pos = [[2,3],[1,3],[0,3]]#this hold current body positions
         self.vel = np.array([1,0])# Velocity of snake [x,y] x = how many squares itll move every frame on the x axis,y = how many squares itll move every frame on the y axis
         self.color = color#color of snake cuz why not
+        self.nextVel = np.array([1,0])
     def move(self):
+        self.vel = self.nextVel
         copyOfBodyPos = self.body_pos.copy()#copys the current body_pos so we dont change the real body_pos until were done moving all the positions
         for i,cord in enumerate(self.body_pos):#go through every piece of the body
             if i == 0:#if the body is the first piece aka the piece right behind the head
@@ -103,14 +105,14 @@ class VanilaGame:
                 if event.type == pygame.QUIT:#this is vitial                                      | these make it so you can end window
                     break#this is vitial                                                          | if you dont have these lines in your pygame loop your game will crash
             keys = pygame.key.get_pressed() #Grab Pressed Keys
-            if(keys[pygame.K_LEFT]):#left arrow
-                self.snake.vel = [-1,0]
-            if(keys[pygame.K_UP]):#up arrow
-                self.snake.vel = [0,-1]
-            if(keys[pygame.K_RIGHT]):#right arrow
-                self.snake.vel = [1,0]
-            if(keys[pygame.K_DOWN]):#down arrow
-                self.snake.vel = [0,1]
+            if(keys[pygame.K_LEFT]) and self.snake.vel[0] != 1 and self.snake.vel[1] != 0:#left arrow
+                self.snake.nextVel = [-1,0]
+            if(keys[pygame.K_UP]) and self.snake.vel[0] != 0 and self.snake.vel[1] != 1:#up arrow
+                self.snake.nextVel = [0,-1]
+            if(keys[pygame.K_RIGHT]) and self.snake.vel[0] != -1 and self.snake.vel[1] != 0:#right arrow
+                self.snake.nextVel = [1,0]
+            if(keys[pygame.K_DOWN]) and self.snake.vel[0] != 0 and self.snake.vel[1] != -1:#down arrow
+                self.snake.nextVel = [0,1]
             self.snake.move()#move snake
             #put Game logic her like collisions etc
             if(self.snake.current_pos[0] == self.food.currentPos[0] and self.snake.current_pos[1] == self.food.currentPos[1]):#checks if the snake head is on top of the food aka eating it this should be a fucntion but who cares its like 2 lines
